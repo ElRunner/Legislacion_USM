@@ -357,34 +357,38 @@
 
 </main>
 
-<footer>Los datos se guardan localmente en este navegador.</footer>
+<footer>Los datos se sincronizan en la nube en tiempo real (Firebase).</footer>
 
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
+    onSnapshot, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
   // ======= CONFIGURACIÓN =======
   const CONTRASENA_PROFESOR = "profe2026";
-
-  const CLAVE_ESTUDIANTES = "puntajes_estudiantes";
-  const CLAVE_HISTORIAL = "puntajes_historial";
   const CLAVE_SESION = "puntajes_sesion_activa";
 
-  // ======= ESTADO / DATOS =======
-  function cargarEstudiantes() {
-    const datos = localStorage.getItem(CLAVE_ESTUDIANTES);
-    return datos ? JSON.parse(datos) : [];
-  }
-  function guardarEstudiantes(lista) {
-    localStorage.setItem(CLAVE_ESTUDIANTES, JSON.stringify(lista));
-  }
-  function cargarHistorial() {
-    const datos = localStorage.getItem(CLAVE_HISTORIAL);
-    return datos ? JSON.parse(datos) : [];
-  }
-  function guardarHistorial(lista) {
-    localStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(lista));
-  }
-  function generarId() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  }
+  const firebaseConfig = {
+    apiKey: "AIzaSyCk9LznEJ6jMUBjBOD1NN4NGATAdun47Zw",
+    authDomain: "legislacionusm.firebaseapp.com",
+    projectId: "legislacionusm",
+    storageBucket: "legislacionusm.firebasestorage.app",
+    messagingSenderId: "275588634772",
+    appId: "1:275588634772:web:2a6a723ccd9543a8e6bc81"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const estudiantesRef = collection(db, 'estudiantes');
+  const historialRef = collection(db, 'historial');
+  const historialQuery = query(historialRef, orderBy('creado', 'desc'));
+
+  // ======= ESTADO EN MEMORIA (sincronizado en tiempo real con Firestore) =======
+  let estudiantesCache = [];
+  let historialCache = [];
+
   function fechaHoy() {
     const d = new Date();
     return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
@@ -438,7 +442,7 @@
 
   // ======= VISTA PÚBLICA =======
   function renderizarPublica() {
-    const estudiantes = cargarEstudiantes().slice().sort((a, b) => b.puntaje - a.puntaje);
+    const estudiantes = estudiantesCache.slice().sort((a, b) => b.puntaje - a.puntaje);
     const tbody = document.getElementById('tablaPublicaBody');
     const vacio = document.getElementById('publicaVacio');
     tbody.innerHTML = '';
@@ -470,7 +474,7 @@
   }
 
   // ======= PANEL PROFESOR: AGREGAR =======
-  function agregarEstudiante() {
+  async function agregarEstudiante() {
     const nombreInput = document.getElementById('nuevoNombre');
     const cursoInput = document.getElementById('nuevoCurso');
     const nombre = nombreInput.value.trim();
@@ -481,24 +485,15 @@
       return;
     }
 
-    const estudiantes = cargarEstudiantes();
-    estudiantes.push({
-      id: generarId(),
-      nombre,
-      curso,
-      puntaje: 0
-    });
-    guardarEstudiantes(estudiantes);
+    await addDoc(estudiantesRef, { nombre, curso, puntaje: 0 });
 
     nombreInput.value = '';
     cursoInput.value = '';
-    renderizarProfesor();
   }
 
   // ======= PANEL PROFESOR: LISTA / FILTROS =======
   function actualizarFiltroCursos() {
-    const estudiantes = cargarEstudiantes();
-    const cursos = [...new Set(estudiantes.map(e => e.curso).filter(c => c))].sort();
+    const cursos = [...new Set(estudiantesCache.map(e => e.curso).filter(c => c))].sort();
 
     const selectFiltro = document.getElementById('filtroCurso');
     const valorActual = selectFiltro.value;
@@ -509,18 +504,17 @@
     const selectHistorial = document.getElementById('filtroHistorialEstudiante');
     const valorHistorialActual = selectHistorial.value;
     selectHistorial.innerHTML = '<option value="">Todos los estudiantes</option>' +
-      estudiantes.map(e => `<option value="${e.id}">${escaparHTML(e.nombre)}</option>`).join('');
-    selectHistorial.value = estudiantes.some(e => e.id === valorHistorialActual) ? valorHistorialActual : '';
+      estudiantesCache.map(e => `<option value="${e.id}">${escaparHTML(e.nombre)}</option>`).join('');
+    selectHistorial.value = estudiantesCache.some(e => e.id === valorHistorialActual) ? valorHistorialActual : '';
   }
 
   function renderizarProfesor() {
     actualizarFiltroCursos();
 
-    const estudiantes = cargarEstudiantes();
     const filtroNombre = document.getElementById('filtroNombre').value.trim().toLowerCase();
     const filtroCurso = document.getElementById('filtroCurso').value;
 
-    const filtrados = estudiantes.filter(e => {
+    const filtrados = estudiantesCache.filter(e => {
       const coincideNombre = !filtroNombre || e.nombre.toLowerCase().includes(filtroNombre);
       const coincideCurso = !filtroCurso || e.curso === filtroCurso;
       return coincideNombre && coincideCurso;
@@ -572,7 +566,7 @@
   }
 
   // ======= AJUSTE DE PUNTAJE =======
-  function ajustarPuntaje(id, signo) {
+  async function ajustarPuntaje(id, signo) {
     const inputCantidad = document.getElementById(`cantidad-${id}`);
     let cantidad = parseInt(inputCantidad.value, 10);
     if (isNaN(cantidad) || cantidad <= 0) {
@@ -580,27 +574,22 @@
       return;
     }
 
-    const estudiantes = cargarEstudiantes();
-    const estudiante = estudiantes.find(e => e.id === id);
+    const estudiante = estudiantesCache.find(e => e.id === id);
     if (!estudiante) return;
 
     const cambio = cantidad * signo;
-    estudiante.puntaje += cambio;
-    guardarEstudiantes(estudiantes);
+    const nuevoPuntaje = estudiante.puntaje + cambio;
 
-    const historial = cargarHistorial();
-    historial.unshift({
-      id: generarId(),
+    await updateDoc(doc(db, 'estudiantes', id), { puntaje: nuevoPuntaje });
+
+    await addDoc(historialRef, {
       estudianteId: id,
       nombreEstudiante: estudiante.nombre,
       fecha: fechaHoy(),
       cambio,
-      puntajeResultante: estudiante.puntaje
+      puntajeResultante: nuevoPuntaje,
+      creado: Date.now()
     });
-    guardarHistorial(historial);
-
-    renderizarProfesor();
-    renderizarHistorial();
   }
 
   // ======= EDITAR / ELIMINAR =======
@@ -608,7 +597,7 @@
     document.getElementById(`edit-${id}`).classList.toggle('activo');
   }
 
-  function guardarEdicion(id) {
+  async function guardarEdicion(id) {
     const nombre = document.getElementById(`edit-nombre-${id}`).value.trim();
     const curso = document.getElementById(`edit-curso-${id}`).value.trim();
     const puntaje = parseInt(document.getElementById(`edit-puntaje-${id}`).value, 10);
@@ -622,51 +611,40 @@
       return;
     }
 
-    const estudiantes = cargarEstudiantes();
-    const estudiante = estudiantes.find(e => e.id === id);
+    const estudiante = estudiantesCache.find(e => e.id === id);
     if (!estudiante) return;
 
     const puntajeAnterior = estudiante.puntaje;
-    estudiante.nombre = nombre;
-    estudiante.curso = curso;
-    estudiante.puntaje = puntaje;
-    guardarEstudiantes(estudiantes);
+
+    await updateDoc(doc(db, 'estudiantes', id), { nombre, curso, puntaje });
 
     if (puntaje !== puntajeAnterior) {
-      const historial = cargarHistorial();
-      historial.unshift({
-        id: generarId(),
+      await addDoc(historialRef, {
         estudianteId: id,
-        nombreEstudiante: estudiante.nombre,
+        nombreEstudiante: nombre,
         fecha: fechaHoy(),
         cambio: puntaje - puntajeAnterior,
-        puntajeResultante: puntaje
+        puntajeResultante: puntaje,
+        creado: Date.now()
       });
-      guardarHistorial(historial);
     }
-
-    renderizarProfesor();
-    renderizarHistorial();
   }
 
-  function eliminarEstudiante(id) {
-    const estudiantes = cargarEstudiantes();
-    const estudiante = estudiantes.find(e => e.id === id);
+  async function eliminarEstudiante(id) {
+    const estudiante = estudiantesCache.find(e => e.id === id);
     if (!estudiante) return;
 
     if (!confirm(`¿Eliminar a "${estudiante.nombre}"? Esta acción no se puede deshacer.`)) {
       return;
     }
 
-    guardarEstudiantes(estudiantes.filter(e => e.id !== id));
-    renderizarProfesor();
+    await deleteDoc(doc(db, 'estudiantes', id));
   }
 
   // ======= HISTORIAL =======
   function renderizarHistorial() {
-    const historial = cargarHistorial();
     const filtroId = document.getElementById('filtroHistorialEstudiante').value;
-    const filtrado = filtroId ? historial.filter(h => h.estudianteId === filtroId) : historial;
+    const filtrado = filtroId ? historialCache.filter(h => h.estudianteId === filtroId) : historialCache;
 
     const contenedor = document.getElementById('listaHistorial');
     const vacio = document.getElementById('historialVacio');
@@ -697,6 +675,22 @@
     });
   }
 
+  // ======= SINCRONIZACIÓN EN TIEMPO REAL =======
+  function vistaProfesorActiva() {
+    return !document.getElementById('vistaProfesor').classList.contains('oculto');
+  }
+
+  onSnapshot(estudiantesRef, (snapshot) => {
+    estudiantesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderizarPublica();
+    if (vistaProfesorActiva()) renderizarProfesor();
+  });
+
+  onSnapshot(historialQuery, (snapshot) => {
+    historialCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (vistaProfesorActiva()) renderizarHistorial();
+  });
+
   // ======= INICIO =======
   function iniciar() {
     if (sessionStorage.getItem(CLAVE_SESION) === '1') {
@@ -706,11 +700,18 @@
       renderizarProfesor();
       renderizarHistorial();
     } else {
-      renderizarPublica();
+      mostrarSoloVista('vistaPublica');
     }
   }
 
   iniciar();
+
+  // Exponer funciones invocadas desde atributos onclick/onchange/oninput del HTML
+  Object.assign(window, {
+    mostrarLogin, volverAPublica, intentarLogin, cerrarSesion,
+    agregarEstudiante, renderizarProfesor, renderizarHistorial,
+    ajustarPuntaje, toggleEdicion, guardarEdicion, eliminarEstudiante
+  });
 </script>
 
 </body>
