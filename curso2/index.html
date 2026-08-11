@@ -56,7 +56,7 @@
     padding: 20px;
   }
 
-  /* ---------- Vista p√∫blica ---------- */
+  /* ---------- Vista p&#250;blica ---------- */
   .tabla-contenedor {
     background: white;
     border-radius: 10px;
@@ -279,16 +279,16 @@
 <body>
 
 <header>
-  <h1>üèÜ Puntajes de Estudiantes - ICS112 Casa Central</h1>
+  <h1>&#127942; Puntajes de Estudiantes - ICS112 Casa Central</h1>
   <div>
     <button id="btnIrProfesor" onclick="mostrarLogin()">Modo Profesor</button>
-    <button id="btnCerrarSesion" class="oculto" onclick="cerrarSesion()">Cerrar sesi√≥n</button>
+    <button id="btnCerrarSesion" class="oculto" onclick="cerrarSesion()">Cerrar sesi&#243;n</button>
   </div>
 </header>
 
 <main>
 
-  <!-- VISTA P√öBLICA -->
+  <!-- VISTA P&#218;BLICA -->
   <section id="vistaPublica">
     <div class="tabla-contenedor">
       <table>
@@ -302,7 +302,7 @@
         </thead>
         <tbody id="tablaPublicaBody"></tbody>
       </table>
-      <div id="publicaVacio" class="vacio oculto">Todav√≠a no hay estudiantes registrados.</div>
+      <div id="publicaVacio" class="vacio oculto">Todav&#237;a no hay estudiantes registrados.</div>
     </div>
   </section>
 
@@ -310,11 +310,11 @@
   <section id="vistaLogin" class="oculto">
     <div class="login-box">
       <h2>Acceso Profesor</h2>
-      <p>Ingres√° la contrase√±a para gestionar los puntajes.</p>
-      <input type="password" id="inputPassword" placeholder="Contrase√±a" onkeydown="if(event.key==='Enter') intentarLogin()">
+      <p>Ingres&#225; la contrase&#241;a para gestionar los puntajes.</p>
+      <input type="password" id="inputPassword" placeholder="Contrase&#241;a" onkeydown="if(event.key==='Enter') intentarLogin()">
       <div class="error-msg" id="loginError"></div>
       <button onclick="intentarLogin()">Ingresar</button>
-      <p style="margin-top:14px;"><a href="#" onclick="volverAPublica(); return false;" style="color:var(--azul);">‚Üê Volver a la vista p√∫blica</a></p>
+      <p style="margin-top:14px;"><a href="#" onclick="volverAPublica(); return false;" style="color:var(--azul);">&#8592; Volver a la vista p&#250;blica</a></p>
     </div>
   </section>
 
@@ -322,7 +322,7 @@
   <section id="vistaProfesor" class="oculto">
 
     <div class="panel-seccion">
-      <h2>‚ûï Agregar estudiante</h2>
+      <h2>&#10133; Agregar estudiante</h2>
       <div class="form-fila">
         <input type="text" id="nuevoNombre" placeholder="Nombre del estudiante">
         <input type="text" id="nuevoCurso" placeholder="Curso / Grupo (opcional)">
@@ -331,7 +331,7 @@
     </div>
 
     <div class="panel-seccion">
-      <h2>üë• Estudiantes</h2>
+      <h2>&#128101; Estudiantes</h2>
       <div class="form-fila" style="margin-bottom:16px;">
         <input type="text" id="filtroNombre" placeholder="Buscar por nombre..." oninput="renderizarProfesor()">
         <select id="filtroCurso" onchange="renderizarProfesor()">
@@ -343,14 +343,14 @@
     </div>
 
     <div class="panel-seccion">
-      <h2>üìú Historial de cambios</h2>
+      <h2>&#128220; Historial de cambios</h2>
       <div class="form-fila" style="margin-bottom:10px;">
         <select id="filtroHistorialEstudiante" onchange="renderizarHistorial()">
           <option value="">Todos los estudiantes</option>
         </select>
       </div>
       <div class="historial-lista" id="listaHistorial"></div>
-      <div id="historialVacio" class="vacio oculto">Todav√≠a no hay cambios registrados.</div>
+      <div id="historialVacio" class="vacio oculto">Todav&#237;a no hay cambios registrados.</div>
     </div>
 
   </section>
@@ -366,7 +366,7 @@
     onSnapshot, query, orderBy
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-  // ======= CONFIGURACI√ìN =======
+  // ======= CONFIGURACI\u00d3N =======
   const CONTRASENA_PROFESOR = "profe2026";
   const CLAVE_SESION = "puntajes_sesion_activa_ics112";
 
@@ -395,7 +395,7 @@
            ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  // ======= NAVEGACI√ìN DE VISTAS =======
+  // ======= NAVEGACI\u00d3N DE VISTAS =======
   function mostrarSoloVista(id) {
     ['vistaPublica', 'vistaLogin', 'vistaProfesor'].forEach(v => {
       document.getElementById(v).classList.toggle('oculto', v !== id);
@@ -423,7 +423,7 @@
       sessionStorage.setItem(CLAVE_SESION, '1');
       entrarAPanelProfesor();
     } else {
-      document.getElementById('loginError').textContent = 'Contrase√±a incorrecta.';
+      document.getElementById('loginError').textContent = 'Contrase\u00f1a incorrecta.';
     }
   }
 
@@ -440,7 +440,7 @@
     volverAPublica();
   }
 
-  // ======= VISTA P√öBLICA =======
+  // ======= VISTA P\u00daBLICA =======
   function renderizarPublica() {
     const estudiantes = estudiantesCache.slice().sort((a, b) => b.puntaje - a.puntaje);
     const tbody = document.getElementById('tablaPublicaBody');
@@ -453,7 +453,7 @@
     }
     vacio.classList.add('oculto');
 
-    const medallas = ['ü•á', 'ü•à', 'ü•â'];
+    const medallas = ['\ud83e\udd47', '\ud83e\udd48', '\ud83e\udd49'];
     estudiantes.forEach((est, i) => {
       const tr = document.createElement('tr');
       const medalla = medallas[i] ? `<span class="medalla">${medallas[i]}</span>` : '';
@@ -481,7 +481,7 @@
     const curso = cursoInput.value.trim();
 
     if (!nombre) {
-      alert('Ingres√° el nombre del estudiante.');
+      alert('Ingres\u00e1 el nombre del estudiante.');
       return;
     }
 
@@ -544,13 +544,13 @@
 
         <div class="acciones-rapidas">
           <input type="number" id="cantidad-${est.id}" placeholder="Cantidad" min="0" value="1">
-          <button class="btn btn-exito btn-chico" onclick="ajustarPuntaje('${est.id}', 1)">‚ûï Sumar</button>
-          <button class="btn btn-peligro btn-chico" onclick="ajustarPuntaje('${est.id}', -1)">‚ûñ Restar</button>
+          <button class="btn btn-exito btn-chico" onclick="ajustarPuntaje('${est.id}', 1)">\u2795 Sumar</button>
+          <button class="btn btn-peligro btn-chico" onclick="ajustarPuntaje('${est.id}', -1)">\u2796 Restar</button>
         </div>
 
         <div class="acciones-editar">
-          <button class="btn btn-secundario btn-chico" onclick="toggleEdicion('${est.id}')">‚úèÔ∏è Editar</button>
-          <button class="btn btn-peligro btn-chico" onclick="eliminarEstudiante('${est.id}')">üóëÔ∏è Eliminar</button>
+          <button class="btn btn-secundario btn-chico" onclick="toggleEdicion('${est.id}')">\u270f\ufe0f Editar</button>
+          <button class="btn btn-peligro btn-chico" onclick="eliminarEstudiante('${est.id}')">\ud83d\uddd1\ufe0f Eliminar</button>
         </div>
 
         <div class="edit-form" id="edit-${est.id}">
@@ -570,7 +570,7 @@
     const inputCantidad = document.getElementById(`cantidad-${id}`);
     let cantidad = parseInt(inputCantidad.value, 10);
     if (isNaN(cantidad) || cantidad <= 0) {
-      alert('Ingres√° una cantidad v√°lida mayor a 0.');
+      alert('Ingres\u00e1 una cantidad v\u00e1lida mayor a 0.');
       return;
     }
 
@@ -603,11 +603,11 @@
     const puntaje = parseInt(document.getElementById(`edit-puntaje-${id}`).value, 10);
 
     if (!nombre) {
-      alert('El nombre no puede estar vac√≠o.');
+      alert('El nombre no puede estar vac\u00edo.');
       return;
     }
     if (isNaN(puntaje)) {
-      alert('El puntaje debe ser un n√∫mero.');
+      alert('El puntaje debe ser un n\u00famero.');
       return;
     }
 
@@ -634,7 +634,7 @@
     const estudiante = estudiantesCache.find(e => e.id === id);
     if (!estudiante) return;
 
-    if (!confirm(`¬øEliminar a "${estudiante.nombre}"? Esta acci√≥n no se puede deshacer.`)) {
+    if (!confirm(`\u00bfEliminar a "${estudiante.nombre}"? Esta acci\u00f3n no se puede deshacer.`)) {
       return;
     }
 
@@ -675,7 +675,7 @@
     });
   }
 
-  // ======= SINCRONIZACI√ìN EN TIEMPO REAL =======
+  // ======= SINCRONIZACI\u00d3N EN TIEMPO REAL =======
   function vistaProfesorActiva() {
     return !document.getElementById('vistaProfesor').classList.contains('oculto');
   }
