@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puntajes de Estudiantes - ICS315 Vitacura</title>
+<style>
+  :root {
+    --azul: #2563eb;
+    --azul-oscuro: #1d4ed8;
+    --verde: #16a34a;
+    --rojo: #dc2626;
+    --gris-bg: #f3f4f6;
+    --gris-borde: #e5e7eb;
+    --gris-texto: #374151;
+    --oro: #f59e0b;
+    --plata: #9ca3af;
+    --bronce: #b45309;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--gris-bg);
+    color: var(--gris-texto);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--azul);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+  header button {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  header button:hover { background: rgba(255,255,255,0.28); }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* ---------- Vista p√∫blica ---------- */
+  .tabla-contenedor {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+  }
+  th {
+    background: var(--azul);
+    color: white;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  .puesto {
+    font-weight: 700;
+    width: 50px;
+  }
+  .puntaje-celda {
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    font-size: 1.1rem;
+  }
+  .medalla { font-size: 1.2rem; margin-right: 4px; }
+  .curso-tag {
+    display: inline-block;
+    background: #e0e7ff;
+    color: var(--azul-oscuro);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+  }
+  .vacio {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+  }
+
+  /* ---------- Login ---------- */
+  .login-box {
+    max-width: 380px;
+    margin: 60px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .login-box h2 { margin-top: 0; }
+  .login-box input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    margin: 12px 0;
+  }
+  .login-box button {
+    width: 100%;
+    padding: 10px;
+    background: var(--azul);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .login-box button:hover { background: var(--azul-oscuro); }
+  .error-msg {
+    color: var(--rojo);
+    font-size: 0.9rem;
+    min-height: 20px;
+  }
+
+  /* ---------- Panel profesor ---------- */
+  .panel-seccion {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .panel-seccion h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: var(--azul-oscuro);
+  }
+  .form-fila {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .form-fila input {
+    flex: 1;
+    min-width: 140px;
+    padding: 9px 10px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  .btn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .btn-primario { background: var(--azul); color: white; }
+  .btn-primario:hover { background: var(--azul-oscuro); }
+  .btn-exito { background: var(--verde); color: white; }
+  .btn-peligro { background: var(--rojo); color: white; }
+  .btn-secundario { background: #e5e7eb; color: var(--gris-texto); }
+  .btn-chico { padding: 5px 10px; font-size: 0.8rem; }
+
+  .estudiante-card {
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .estudiante-card-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .estudiante-nombre {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .estudiante-puntaje {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--azul-oscuro);
+  }
+  .acciones-rapidas {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .acciones-rapidas input[type="number"] {
+    width: 80px;
+    padding: 7px 8px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+  }
+  .acciones-editar {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .edit-form {
+    display: none;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--gris-borde);
+  }
+  .edit-form.activo { display: flex; }
+  .edit-form input { flex: 1; min-width: 120px; padding: 8px; border: 1px solid var(--gris-borde); border-radius: 6px; }
+
+  .historial-lista {
+    max-height: 320px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+  }
+  .historial-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  .historial-item:last-child { border-bottom: none; }
+  .historial-fecha { color: #6b7280; font-size: 0.82rem; }
+  .cambio-positivo { color: var(--verde); font-weight: 700; }
+  .cambio-negativo { color: var(--rojo); font-weight: 700; }
+
+  select {
+    padding: 9px 10px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+
+  .oculto { display: none !important; }
+
+  footer {
+    text-align: center;
+    padding: 16px;
+    color: #9ca3af;
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 480px) {
+    header h1 { font-size: 1.1rem; }
+    th, td { padding: 9px 8px; font-size: 0.9rem; }
+    .estudiante-puntaje { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>üèÜ Puntajes de Estudiantes - ICS315 Vitacura</h1>
+  <div>
+    <button id="btnIrProfesor" onclick="mostrarLogin()">Modo Profesor</button>
+    <button id="btnCerrarSesion" class="oculto" onclick="cerrarSesion()">Cerrar sesi√≥n</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- VISTA P√öBLICA -->
+  <section id="vistaPublica">
+    <div class="tabla-contenedor">
+      <table>
+        <thead>
+          <tr>
+            <th class="puesto">#</th>
+            <th>Nombre</th>
+            <th>Curso/Grupo</th>
+            <th>Puntaje</th>
+          </tr>
+        </thead>
+        <tbody id="tablaPublicaBody"></tbody>
+      </table>
+      <div id="publicaVacio" class="vacio oculto">Todav√≠a no hay estudiantes registrados.</div>
+    </div>
+  </section>
+
+  <!-- LOGIN -->
+  <section id="vistaLogin" class="oculto">
+    <div class="login-box">
+      <h2>Acceso Profesor</h2>
+      <p>Ingres√° la contrase√±a para gestionar los puntajes.</p>
+      <input type="password" id="inputPassword" placeholder="Contrase√±a" onkeydown="if(event.key==='Enter') intentarLogin()">
+      <div class="error-msg" id="loginError"></div>
+      <button onclick="intentarLogin()">Ingresar</button>
+      <p style="margin-top:14px;"><a href="#" onclick="volverAPublica(); return false;" style="color:var(--azul);">‚Üê Volver a la vista p√∫blica</a></p>
+    </div>
+  </section>
+
+  <!-- PANEL PROFESOR -->
+  <section id="vistaProfesor" class="oculto">
+
+    <div class="panel-seccion">
+      <h2>‚ûï Agregar estudiante</h2>
+      <div class="form-fila">
+        <input type="text" id="nuevoNombre" placeholder="Nombre del estudiante">
+        <input type="text" id="nuevoCurso" placeholder="Curso / Grupo (opcional)">
+        <button class="btn btn-primario" onclick="agregarEstudiante()">Agregar</button>
+      </div>
+    </div>
+
+    <div class="panel-seccion">
+      <h2>üë• Estudiantes</h2>
+      <div class="form-fila" style="margin-bottom:16px;">
+        <input type="text" id="filtroNombre" placeholder="Buscar por nombre..." oninput="renderizarProfesor()">
+        <select id="filtroCurso" onchange="renderizarProfesor()">
+          <option value="">Todos los cursos</option>
+        </select>
+      </div>
+      <div id="listaEstudiantes"></div>
+      <div id="profesorVacio" class="vacio oculto">No hay estudiantes que coincidan.</div>
+    </div>
+
+    <div class="panel-seccion">
+      <h2>üìú Historial de cambios</h2>
+      <div class="form-fila" style="margin-bottom:10px;">
+        <select id="filtroHistorialEstudiante" onchange="renderizarHistorial()">
+          <option value="">Todos los estudiantes</option>
+        </select>
+      </div>
+      <div class="historial-lista" id="listaHistorial"></div>
+      <div id="historialVacio" class="vacio oculto">Todav√≠a no hay cambios registrados.</div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>Los datos se sincronizan en la nube en tiempo real (Firebase).</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, updateDoc, deleteDoc, doc,
+    onSnapshot, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // ======= CONFIGURACI√ìN =======
+  const CONTRASENA_PROFESOR = "profe2026";
+  const CLAVE_SESION = "puntajes_sesion_activa_ics315";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCk9LznEJ6jMUBjBOD1NN4NGATAdun47Zw",
+    authDomain: "legislacionusm.firebaseapp.com",
+    projectId: "legislacionusm",
+    storageBucket: "legislacionusm.firebasestorage.app",
+    messagingSenderId: "275588634772",
+    appId: "1:275588634772:web:2a6a723ccd9543a8e6bc81"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const estudiantesRef = collection(db, 'estudiantes_ics315');
+  const historialRef = collection(db, 'historial_ics315');
+  const historialQuery = query(historialRef, orderBy('creado', 'desc'));
+
+  // ======= ESTADO EN MEMORIA (sincronizado en tiempo real con Firestore) =======
+  let estudiantesCache = [];
+  let historialCache = [];
+
+  function fechaHoy() {
+    const d = new Date();
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+           ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // ======= NAVEGACI√ìN DE VISTAS =======
+  function mostrarSoloVista(id) {
+    ['vistaPublica', 'vistaLogin', 'vistaProfesor'].forEach(v => {
+      document.getElementById(v).classList.toggle('oculto', v !== id);
+    });
+  }
+
+  function mostrarLogin() {
+    document.getElementById('inputPassword').value = '';
+    document.getElementById('loginError').textContent = '';
+    mostrarSoloVista('vistaLogin');
+    document.getElementById('btnIrProfesor').classList.add('oculto');
+    setTimeout(() => document.getElementById('inputPassword').focus(), 50);
+  }
+
+  function volverAPublica() {
+    mostrarSoloVista('vistaPublica');
+    document.getElementById('btnIrProfesor').classList.remove('oculto');
+    document.getElementById('btnCerrarSesion').classList.add('oculto');
+    renderizarPublica();
+  }
+
+  function intentarLogin() {
+    const valor = document.getElementById('inputPassword').value;
+    if (valor === CONTRASENA_PROFESOR) {
+      sessionStorage.setItem(CLAVE_SESION, '1');
+      entrarAPanelProfesor();
+    } else {
+      document.getElementById('loginError').textContent = 'Contrase√±a incorrecta.';
+    }
+  }
+
+  function entrarAPanelProfesor() {
+    mostrarSoloVista('vistaProfesor');
+    document.getElementById('btnIrProfesor').classList.add('oculto');
+    document.getElementById('btnCerrarSesion').classList.remove('oculto');
+    renderizarProfesor();
+    renderizarHistorial();
+  }
+
+  function cerrarSesion() {
+    sessionStorage.removeItem(CLAVE_SESION);
+    volverAPublica();
+  }
+
+  // ======= VISTA P√öBLICA =======
+  function renderizarPublica() {
+    const estudiantes = estudiantesCache.slice().sort((a, b) => b.puntaje - a.puntaje);
+    const tbody = document.getElementById('tablaPublicaBody');
+    const vacio = document.getElementById('publicaVacio');
+    tbody.innerHTML = '';
+
+    if (estudiantes.length === 0) {
+      vacio.classList.remove('oculto');
+      return;
+    }
+    vacio.classList.add('oculto');
+
+    const medallas = ['ü•á', 'ü•à', 'ü•â'];
+    estudiantes.forEach((est, i) => {
+      const tr = document.createElement('tr');
+      const medalla = medallas[i] ? `<span class="medalla">${medallas[i]}</span>` : '';
+      tr.innerHTML = `
+        <td class="puesto">${medalla}${i + 1}</td>
+        <td>${escaparHTML(est.nombre)}</td>
+        <td>${est.curso ? `<span class="curso-tag">${escaparHTML(est.curso)}</span>` : '-'}</td>
+        <td class="puntaje-celda">${est.puntaje}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function escaparHTML(texto) {
+    const div = document.createElement('div');
+    div.textContent = texto;
+    return div.innerHTML;
+  }
+
+  // ======= PANEL PROFESOR: AGREGAR =======
+  async function agregarEstudiante() {
+    const nombreInput = document.getElementById('nuevoNombre');
+    const cursoInput = document.getElementById('nuevoCurso');
+    const nombre = nombreInput.value.trim();
+    const curso = cursoInput.value.trim();
+
+    if (!nombre) {
+      alert('Ingres√° el nombre del estudiante.');
+      return;
+    }
+
+    await addDoc(estudiantesRef, { nombre, curso, puntaje: 0 });
+
+    nombreInput.value = '';
+    cursoInput.value = '';
+  }
+
+  // ======= PANEL PROFESOR: LISTA / FILTROS =======
+  function actualizarFiltroCursos() {
+    const cursos = [...new Set(estudiantesCache.map(e => e.curso).filter(c => c))].sort();
+
+    const selectFiltro = document.getElementById('filtroCurso');
+    const valorActual = selectFiltro.value;
+    selectFiltro.innerHTML = '<option value="">Todos los cursos</option>' +
+      cursos.map(c => `<option value="${escaparHTML(c)}">${escaparHTML(c)}</option>`).join('');
+    selectFiltro.value = cursos.includes(valorActual) ? valorActual : '';
+
+    const selectHistorial = document.getElementById('filtroHistorialEstudiante');
+    const valorHistorialActual = selectHistorial.value;
+    selectHistorial.innerHTML = '<option value="">Todos los estudiantes</option>' +
+      estudiantesCache.map(e => `<option value="${e.id}">${escaparHTML(e.nombre)}</option>`).join('');
+    selectHistorial.value = estudiantesCache.some(e => e.id === valorHistorialActual) ? valorHistorialActual : '';
+  }
+
+  function renderizarProfesor() {
+    actualizarFiltroCursos();
+
+    const filtroNombre = document.getElementById('filtroNombre').value.trim().toLowerCase();
+    const filtroCurso = document.getElementById('filtroCurso').value;
+
+    const filtrados = estudiantesCache.filter(e => {
+      const coincideNombre = !filtroNombre || e.nombre.toLowerCase().includes(filtroNombre);
+      const coincideCurso = !filtroCurso || e.curso === filtroCurso;
+      return coincideNombre && coincideCurso;
+    }).sort((a, b) => b.puntaje - a.puntaje);
+
+    const contenedor = document.getElementById('listaEstudiantes');
+    const vacio = document.getElementById('profesorVacio');
+    contenedor.innerHTML = '';
+
+    if (filtrados.length === 0) {
+      vacio.classList.remove('oculto');
+      return;
+    }
+    vacio.classList.add('oculto');
+
+    filtrados.forEach(est => {
+      const card = document.createElement('div');
+      card.className = 'estudiante-card';
+      card.innerHTML = `
+        <div class="estudiante-card-encabezado">
+          <div>
+            <div class="estudiante-nombre">${escaparHTML(est.nombre)}</div>
+            ${est.curso ? `<span class="curso-tag">${escaparHTML(est.curso)}</span>` : ''}
+          </div>
+          <div class="estudiante-puntaje">${est.puntaje} pts</div>
+        </div>
+
+        <div class="acciones-rapidas">
+          <input type="number" id="cantidad-${est.id}" placeholder="Cantidad" min="0" value="1">
+          <button class="btn btn-exito btn-chico" onclick="ajustarPuntaje('${est.id}', 1)">‚ûï Sumar</button>
+          <button class="btn btn-peligro btn-chico" onclick="ajustarPuntaje('${est.id}', -1)">‚ûñ Restar</button>
+        </div>
+
+        <div class="acciones-editar">
+          <button class="btn btn-secundario btn-chico" onclick="toggleEdicion('${est.id}')">‚úèÔ∏è Editar</button>
+          <button class="btn btn-peligro btn-chico" onclick="eliminarEstudiante('${est.id}')">üóëÔ∏è Eliminar</button>
+        </div>
+
+        <div class="edit-form" id="edit-${est.id}">
+          <input type="text" id="edit-nombre-${est.id}" value="${escaparHTML(est.nombre)}" placeholder="Nombre">
+          <input type="text" id="edit-curso-${est.id}" value="${escaparHTML(est.curso || '')}" placeholder="Curso/Grupo">
+          <input type="number" id="edit-puntaje-${est.id}" value="${est.puntaje}" placeholder="Puntaje">
+          <button class="btn btn-primario btn-chico" onclick="guardarEdicion('${est.id}')">Guardar</button>
+          <button class="btn btn-secundario btn-chico" onclick="toggleEdicion('${est.id}')">Cancelar</button>
+        </div>
+      `;
+      contenedor.appendChild(card);
+    });
+  }
+
+  // ======= AJUSTE DE PUNTAJE =======
+  async function ajustarPuntaje(id, signo) {
+    const inputCantidad = document.getElementById(`cantidad-${id}`);
+    let cantidad = parseInt(inputCantidad.value, 10);
+    if (isNaN(cantidad) || cantidad <= 0) {
+      alert('Ingres√° una cantidad v√°lida mayor a 0.');
+      return;
+    }
+
+    const estudiante = estudiantesCache.find(e => e.id === id);
+    if (!estudiante) return;
+
+    const cambio = cantidad * signo;
+    const nuevoPuntaje = estudiante.puntaje + cambio;
+
+    await updateDoc(doc(db, 'estudiantes_ics315', id), { puntaje: nuevoPuntaje });
+
+    await addDoc(historialRef, {
+      estudianteId: id,
+      nombreEstudiante: estudiante.nombre,
+      fecha: fechaHoy(),
+      cambio,
+      puntajeResultante: nuevoPuntaje,
+      creado: Date.now()
+    });
+  }
+
+  // ======= EDITAR / ELIMINAR =======
+  function toggleEdicion(id) {
+    document.getElementById(`edit-${id}`).classList.toggle('activo');
+  }
+
+  async function guardarEdicion(id) {
+    const nombre = document.getElementById(`edit-nombre-${id}`).value.trim();
+    const curso = document.getElementById(`edit-curso-${id}`).value.trim();
+    const puntaje = parseInt(document.getElementById(`edit-puntaje-${id}`).value, 10);
+
+    if (!nombre) {
+      alert('El nombre no puede estar vac√≠o.');
+      return;
+    }
+    if (isNaN(puntaje)) {
+      alert('El puntaje debe ser un n√∫mero.');
+      return;
+    }
+
+    const estudiante = estudiantesCache.find(e => e.id === id);
+    if (!estudiante) return;
+
+    const puntajeAnterior = estudiante.puntaje;
+
+    await updateDoc(doc(db, 'estudiantes_ics315', id), { nombre, curso, puntaje });
+
+    if (puntaje !== puntajeAnterior) {
+      await addDoc(historialRef, {
+        estudianteId: id,
+        nombreEstudiante: nombre,
+        fecha: fechaHoy(),
+        cambio: puntaje - puntajeAnterior,
+        puntajeResultante: puntaje,
+        creado: Date.now()
+      });
+    }
+  }
+
+  async function eliminarEstudiante(id) {
+    const estudiante = estudiantesCache.find(e => e.id === id);
+    if (!estudiante) return;
+
+    if (!confirm(`¬øEliminar a "${estudiante.nombre}"? Esta acci√≥n no se puede deshacer.`)) {
+      return;
+    }
+
+    await deleteDoc(doc(db, 'estudiantes_ics315', id));
+  }
+
+  // ======= HISTORIAL =======
+  function renderizarHistorial() {
+    const filtroId = document.getElementById('filtroHistorialEstudiante').value;
+    const filtrado = filtroId ? historialCache.filter(h => h.estudianteId === filtroId) : historialCache;
+
+    const contenedor = document.getElementById('listaHistorial');
+    const vacio = document.getElementById('historialVacio');
+    contenedor.innerHTML = '';
+
+    if (filtrado.length === 0) {
+      vacio.classList.remove('oculto');
+      return;
+    }
+    vacio.classList.add('oculto');
+
+    filtrado.forEach(h => {
+      const claseCambio = h.cambio >= 0 ? 'cambio-positivo' : 'cambio-negativo';
+      const signo = h.cambio >= 0 ? '+' : '';
+      const item = document.createElement('div');
+      item.className = 'historial-item';
+      item.innerHTML = `
+        <div>
+          <div><strong>${escaparHTML(h.nombreEstudiante)}</strong></div>
+          <div class="historial-fecha">${h.fecha}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="${claseCambio}">${signo}${h.cambio}</div>
+          <div class="historial-fecha">Total: ${h.puntajeResultante}</div>
+        </div>
+      `;
+      contenedor.appendChild(item);
+    });
+  }
+
+  // ======= SINCRONIZACI√ìN EN TIEMPO REAL =======
+  function vistaProfesorActiva() {
+    return !document.getElementById('vistaProfesor').classList.contains('oculto');
+  }
+
+  onSnapshot(estudiantesRef, (snapshot) => {
+    estudiantesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderizarPublica();
+    if (vistaProfesorActiva()) renderizarProfesor();
+  });
+
+  onSnapshot(historialQuery, (snapshot) => {
+    historialCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (vistaProfesorActiva()) renderizarHistorial();
+  });
+
+  // ======= INICIO =======
+  function iniciar() {
+    if (sessionStorage.getItem(CLAVE_SESION) === '1') {
+      document.getElementById('btnIrProfesor').classList.add('oculto');
+      document.getElementById('btnCerrarSesion').classList.remove('oculto');
+      mostrarSoloVista('vistaProfesor');
+      renderizarProfesor();
+      renderizarHistorial();
+    } else {
+      mostrarSoloVista('vistaPublica');
+    }
+  }
+
+  iniciar();
+
+  // Exponer funciones invocadas desde atributos onclick/onchange/oninput del HTML
+  Object.assign(window, {
+    mostrarLogin, volverAPublica, intentarLogin, cerrarSesion,
+    agregarEstudiante, renderizarProfesor, renderizarHistorial,
+    ajustarPuntaje, toggleEdicion, guardarEdicion, eliminarEstudiante
+  });
+</script>
+
+</body>
+</html>
