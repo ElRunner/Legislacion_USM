@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel de Puntajes</title>
+<style>
+  :root {
+    --azul: #2563eb;
+    --azul-oscuro: #1d4ed8;
+    --verde: #16a34a;
+    --rojo: #dc2626;
+    --gris-bg: #f3f4f6;
+    --gris-borde: #e5e7eb;
+    --gris-texto: #374151;
+    --oro: #f59e0b;
+    --plata: #9ca3af;
+    --bronce: #b45309;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--gris-bg);
+    color: var(--gris-texto);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--azul);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+  header button {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  header button:hover { background: rgba(255,255,255,0.28); }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .vacio {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+  }
+  .ayuda { font-size: 0.85rem; color: #6b7280; margin: 6px 0 10px; }
+  .etiqueta { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+
+  /* ---------- Login ---------- */
+  .login-box {
+    max-width: 380px;
+    margin: 60px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .login-box h2 { margin-top: 0; }
+  .login-box input {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    margin: 12px 0;
+  }
+  .login-box button {
+    width: 100%;
+    padding: 10px;
+    background: var(--azul);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .login-box button:hover { background: var(--azul-oscuro); }
+  .login-box button:disabled { opacity: 0.6; cursor: wait; }
+  .error-msg {
+    color: var(--rojo);
+    font-size: 0.9rem;
+    min-height: 20px;
+  }
+
+  /* ---------- Panel ---------- */
+  .layout {
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .panel-seccion {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .panel-seccion h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: var(--azul-oscuro);
+  }
+  .curso-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    background: white;
+    color: var(--gris-texto);
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .curso-item:hover { border-color: var(--azul); }
+  .curso-item.activo { background: var(--azul); border-color: var(--azul); color: white; }
+  .curso-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .curso-titulo { margin: 0 !important; font-size: 1.35rem !important; }
+
+  .form-fila {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .form-fila input {
+    flex: 1;
+    min-width: 140px;
+    padding: 9px 10px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  #enlaceCurso { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; background: #f9fafb; }
+  .btn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn:disabled { opacity: 0.6; cursor: wait; }
+  .btn-primario { background: var(--azul); color: white; }
+  .btn-primario:hover { background: var(--azul-oscuro); }
+  .btn-exito { background: var(--verde); color: white; }
+  .btn-peligro { background: var(--rojo); color: white; }
+  .btn-secundario { background: #e5e7eb; color: var(--gris-texto); }
+  .btn-chico { padding: 5px 10px; font-size: 0.8rem; }
+
+  .curso-tag {
+    display: inline-block;
+    background: #e0e7ff;
+    color: var(--azul-oscuro);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+  }
+  .estudiante-card {
+    border: 1px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .estudiante-card-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .estudiante-nombre {
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+  .estudiante-puntaje {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--azul-oscuro);
+  }
+  .acciones-rapidas {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .acciones-rapidas input[type="number"] {
+    width: 80px;
+    padding: 7px 8px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+  }
+  .acciones-editar {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .edit-form {
+    display: none;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--gris-borde);
+  }
+  .edit-form.activo { display: flex; }
+  .edit-form input { flex: 1; min-width: 120px; padding: 8px; border: 1px solid var(--gris-borde); border-radius: 6px; }
+
+  textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 10px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+    resize: vertical;
+  }
+  .check { display: flex; gap: 8px; align-items: center; font-size: 0.9rem; margin-bottom: 10px; }
+  .aviso {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+  .tabla-previa { overflow-x: auto; border: 1px solid var(--gris-borde); border-radius: 8px; }
+  .tabla-previa table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .tabla-previa th, .tabla-previa td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--gris-borde); }
+  .tabla-previa th { background: #eef2ff; color: var(--azul-oscuro); font-size: 0.8rem; text-transform: uppercase; }
+  .estado-ok { color: var(--verde); font-weight: 700; }
+  .estado-aprox { color: var(--bronce); font-weight: 700; }
+  .estado-nuevo { color: var(--azul); font-weight: 700; }
+  .estado-omitido { color: var(--rojo); font-weight: 700; }
+  code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+
+  .historial-lista {
+    max-height: 360px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+  }
+  .historial-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 4px;
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  .historial-item:last-child { border-bottom: none; }
+  .historial-fecha { color: #6b7280; font-size: 0.82rem; }
+  .cambio-positivo { color: var(--verde); font-weight: 700; }
+  .cambio-negativo { color: var(--rojo); font-weight: 700; }
+
+  select {
+    padding: 9px 10px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: white;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    background: #111827;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    max-width: calc(100% - 32px);
+    z-index: 10;
+  }
+  .toast.error { background: var(--rojo); }
+
+  .oculto { display: none !important; }
+
+  footer {
+    text-align: center;
+    padding: 16px;
+    color: #9ca3af;
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    main { padding: 16px; }
+    header h1 { font-size: 1.1rem; }
+    .estudiante-puntaje { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏆 Panel de Puntajes</h1>
+  <div>
+    <button id="btnCerrarSesion" class="oculto">Cerrar sesión</button>
+  </div>
+</header>
+
+<main>
+
+  <section id="vistaCargando">
+    <div class="vacio">Cargando…</div>
+  </section>
+
+  <!-- LOGIN -->
+  <section id="vistaLogin" class="oculto">
+    <div class="login-box">
+      <h2>Acceso Profesor</h2>
+      <p>Ingresá la contraseña para gestionar los puntajes.</p>
+      <input type="password" id="inputPassword" placeholder="Contraseña" autocomplete="current-password">
+      <div class="error-msg" id="loginError"></div>
+      <button id="btnIngresar">Ingresar</button>
+    </div>
+  </section>
+
+  <!-- PANEL PROFESOR -->
+  <section id="vistaPanel" class="oculto">
+    <div class="layout">
+
+      <aside>
+        <div class="panel-seccion">
+          <h2>📚 Cursos</h2>
+          <div id="listaCursos"></div>
+          <div class="form-fila" style="margin-top:14px;">
+            <input type="text" id="nuevoCursoNombre" placeholder="Nombre del nuevo curso">
+            <button class="btn btn-primario" id="btnCrearCurso">➕ Crear</button>
+          </div>
+        </div>
+
+        <div class="panel-seccion oculto" id="cajaMigracion">
+          <h2>📦 Apps anteriores</h2>
+          <p class="ayuda">Importá los estudiantes, puntajes e historial de las apps que usabas antes: <strong id="migracionPendientes"></strong>. Los datos originales no se borran.</p>
+          <button class="btn btn-primario" id="btnMigrar">Importar cursos anteriores</button>
+        </div>
+      </aside>
+
+      <div>
+        <div id="sinCurso" class="panel-seccion vacio">Creá tu primer curso o elegí uno de la lista.</div>
+
+        <div id="detalleCurso" class="oculto">
+
+          <div class="panel-seccion">
+            <div class="curso-encabezado">
+              <h2 id="cursoNombre" class="curso-titulo"></h2>
+              <div class="acciones-editar" style="margin-top:0;">
+                <button class="btn btn-secundario btn-chico" id="btnRenombrarCurso">✏️ Renombrar</button>
+                <button class="btn btn-peligro btn-chico" id="btnEliminarCurso">🗑️ Eliminar curso</button>
+              </div>
+            </div>
+            <label class="etiqueta" for="enlaceCurso">🔗 Enlace para los estudiantes de este curso</label>
+            <div class="form-fila">
+              <input type="text" id="enlaceCurso" readonly>
+              <button class="btn btn-primario" id="btnCopiarEnlace">📋 Copiar</button>
+              <a class="btn btn-secundario" id="btnAbrirEnlace" target="_blank" rel="noopener">Abrir ↗</a>
+            </div>
+            <p class="ayuda">Cada curso tiene su propio enlace. Quien lo abra ve solo el ranking de este curso: no puede ver otros cursos ni modificar puntajes.</p>
+          </div>
+
+          <div class="panel-seccion">
+            <h2>➕ Agregar estudiante</h2>
+            <div class="form-fila">
+              <input type="text" id="nuevoNombre" placeholder="Nombre del estudiante">
+              <input type="text" id="nuevoCurso" placeholder="Curso / Grupo (opcional)">
+              <button class="btn btn-primario" id="btnAgregarEstudiante">Agregar</button>
+            </div>
+          </div>
+
+          <div class="panel-seccion">
+            <h2>👥 Estudiantes (<span id="totalEstudiantes">0</span>)</h2>
+            <div class="form-fila" style="margin-bottom:16px;">
+              <input type="text" id="filtroNombre" placeholder="Buscar por nombre...">
+              <select id="filtroCurso">
+                <option value="">Todos los grupos</option>
+              </select>
+            </div>
+            <div id="listaEstudiantes"></div>
+            <div id="profesorVacio" class="vacio oculto">No hay estudiantes que coincidan.</div>
+          </div>
+
+          <div class="panel-seccion">
+            <h2>🤖 Cargar puntajes (Claude / Kahoot)</h2>
+            <p class="ayuda">Pegá el bloque que te entrega tu proyecto de Claude, o una lista con un estudiante por línea (por ejemplo <code>DIEGO KONDOR: 5</code>). Usá números negativos para restar. Antes de guardar vas a ver una vista previa.</p>
+            <textarea id="textoImportar" placeholder='{"curso": "ICS315 Vitacura", "motivo": "Kahoot 3", "puntos": [{"nombre": "DIEGO KONDOR", "puntos": 5}]}'></textarea>
+            <div class="form-fila">
+              <input type="text" id="motivoImportar" placeholder="Motivo (opcional, ej: Kahoot 3)">
+            </div>
+            <label class="check"><input type="checkbox" id="crearNuevos"> Crear los estudiantes que no estén en este curso</label>
+            <div class="error-msg" id="importarError"></div>
+            <div class="form-fila">
+              <button class="btn btn-primario" id="btnRevisar">Revisar</button>
+              <button class="btn btn-secundario" id="btnCopiarLista">📋 Copiar lista del curso para Claude</button>
+            </div>
+            <div id="vistaPrevia" class="oculto">
+              <div id="avisoImportar" class="aviso oculto"></div>
+              <div class="tabla-previa">
+                <table>
+                  <thead>
+                    <tr><th>En el texto</th><th>Estudiante</th><th>Puntos</th><th>Nuevo total</th><th>Estado</th></tr>
+                  </thead>
+                  <tbody id="tablaPrevia"></tbody>
+                </table>
+              </div>
+              <div class="form-fila" style="margin-top:12px;">
+                <button class="btn btn-exito" id="btnAplicar">Aplicar puntajes</button>
+                <button class="btn btn-secundario" id="btnCancelarImportar">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-seccion">
+            <h2>📜 Historial de cambios</h2>
+            <div class="form-fila" style="margin-bottom:10px;">
+              <select id="filtroHistorialEstudiante">
+                <option value="">Todos los estudiantes</option>
+              </select>
+            </div>
+            <div class="historial-lista" id="listaHistorial"></div>
+            <div id="historialVacio" class="vacio oculto">Todavía no hay cambios registrados.</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" class="toast oculto" role="status"></div>
+
+<footer>Los datos se sincronizan en la nube en tiempo real (Firebase).</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+    setPersistence, browserSessionPersistence
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, getDocs,
+    onSnapshot, query, orderBy, limit, writeBatch, increment
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // ======= CONFIGURACIÓN =======
+  // La contraseña ya no está en el código: vive en Firebase Authentication,
+  // en el usuario con este correo (solo se usa como identificador, no recibe mails).
+  const CORREO_PROFESOR = "profesor@legislacionusm.app";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCk9LznEJ6jMUBjBOD1NN4NGATAdun47Zw",
+    authDomain: "legislacionusm.firebaseapp.com",
+    projectId: "legislacionusm",
+    storageBucket: "legislacionusm.firebasestorage.app",
+    messagingSenderId: "275588634772",
+    appId: "1:275588634772:web:2a6a723ccd9543a8e6bc81"
+  };
+
+  // Cursos de las apps anteriores. Los ids son fijos para que los enlaces viejos
+  // (raíz, /curso2/, /curso3/) puedan redirigir a la página nueva de cada curso.
+  const MIGRACION = [
+    { id: 'HyQbY22DYUkq1131VNKi', nombre: 'Curso original', estudiantes: 'estudiantes', historial: 'historial' },
+    { id: 'Fk5hkpq6z6E2Zwis7Ajo', nombre: 'ICS112 Casa Central', estudiantes: 'estudiantes_ics112', historial: 'historial_ics112' },
+    { id: 'Oc30xLZqzgBviDvW4lwW', nombre: 'ICS315 Vitacura', estudiantes: 'estudiantes_ics315', historial: 'historial_ics315' }
+  ];
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // ======= ESTADO EN MEMORIA (sincronizado en tiempo real con Firestore) =======
+  let cursos = [];
+  let cursoActualId = null;
+  let estudiantesCache = [];
+  let historialCache = [];
+  let desuscribirCursos = null;
+  let desuscribirCurso = [];
+  let importacionPendiente = null;
+
+  const $ = id => document.getElementById(id);
+
+  function escaparHTML(texto) {
+    const div = document.createElement('div');
+    div.textContent = texto == null ? '' : String(texto);
+    return div.innerHTML;
+  }
+
+  function normalizar(texto) {
+    return String(texto).normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  function fechaHoy() {
+    const d = new Date();
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+           ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function avisar(mensaje, tipo = 'ok') {
+    const toast = $('toast');
+    toast.textContent = mensaje;
+    toast.className = 'toast' + (tipo === 'error' ? ' error' : '');
+    clearTimeout(avisar.timer);
+    avisar.timer = setTimeout(() => toast.classList.add('oculto'), 4000);
+  }
+
+  function mostrarError(e) {
+    console.error(e);
+    if (e && e.code === 'permission-denied') {
+      avisar('Sin permiso para esta acción. Cerrá sesión y volvé a ingresar.', 'error');
+    } else {
+      avisar('Ocurrió un error: ' + (e && e.message ? e.message : e), 'error');
+    }
+  }
+
+  function cursoActual() {
+    return cursos.find(c => c.id === cursoActualId) || null;
+  }
+
+  function enlaceEstudiantes(id) {
+    return new URL('../ver/?c=' + id, location.href).href;
+  }
+
+  function refEstudiantes(cursoId) { return collection(db, 'cursos', cursoId, 'estudiantes'); }
+  function refHistorial(cursoId) { return collection(db, 'cursos', cursoId, 'historial'); }
+
+  function registroHistorial(estudianteId, nombre, cambio, total, motivo) {
+    return {
+      estudianteId,
+      nombreEstudiante: nombre,
+      fecha: fechaHoy(),
+      cambio,
+      puntajeResultante: total,
+      motivo: motivo || '',
+      creado: Date.now()
+    };
+  }
+
+  async function copiarTexto(texto) {
+    try {
+      await navigator.clipboard.writeText(texto);
+    } catch (e) {
+      const area = document.createElement('textarea');
+      area.value = texto;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand('copy');
+      area.remove();
+    }
+  }
+
+  // ======= NAVEGACIÓN DE VISTAS / SESIÓN =======
+  function mostrarSoloVista(id) {
+    ['vistaCargando', 'vistaLogin', 'vistaPanel'].forEach(v => {
+      $(v).classList.toggle('oculto', v !== id);
+    });
+  }
+
+  function mensajeErrorLogin(codigo) {
+    switch (codigo) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found':
+      case 'auth/invalid-login-credentials':
+        return 'Contraseña incorrecta.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Esperá unos minutos y volvé a probar.';
+      case 'auth/network-request-failed':
+        return 'Sin conexión a internet.';
+      case 'auth/operation-not-allowed':
+        return 'El acceso con contraseña no está activado en Firebase.';
+      default:
+        return 'No se pudo ingresar (' + codigo + ').';
+    }
+  }
+
+  async function intentarLogin() {
+    const clave = $('inputPassword').value;
+    if (!clave) return;
+    $('btnIngresar').disabled = true;
+    $('loginError').textContent = '';
+    try {
+      await setPersistence(auth, browserSessionPersistence);
+      await signInWithEmailAndPassword(auth, CORREO_PROFESOR, clave);
+      $('inputPassword').value = '';
+    } catch (e) {
+      $('loginError').textContent = mensajeErrorLogin(e.code);
+    } finally {
+      $('btnIngresar').disabled = false;
+    }
+  }
+
+  function leerCursoDelHash() {
+    const m = location.hash.match(/curso=([A-Za-z0-9]+)/);
+    return m ? m[1] : null;
+  }
+
+  function entrarAlPanel() {
+    mostrarSoloVista('vistaPanel');
+    $('btnCerrarSesion').classList.remove('oculto');
+    if (desuscribirCursos) return;
+
+    desuscribirCursos = onSnapshot(query(collection(db, 'cursos'), orderBy('creado')), (snapshot) => {
+      cursos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderizarCursos();
+      renderizarMigracion();
+
+      const deseado = cursoActualId || leerCursoDelHash();
+      if (deseado && cursos.some(c => c.id === deseado)) {
+        if (deseado !== cursoActualId) seleccionarCurso(deseado);
+        else renderizarEncabezadoCurso();
+      } else {
+        seleccionarCurso(cursos.length ? cursos[0].id : null);
+      }
+    }, mostrarError);
+  }
+
+  function salirDelPanel() {
+    if (desuscribirCursos) desuscribirCursos();
+    desuscribirCursos = null;
+    desuscribirCurso.forEach(f => f());
+    desuscribirCurso = [];
+    cursos = [];
+    cursoActualId = null;
+    estudiantesCache = [];
+    historialCache = [];
+    $('btnCerrarSesion').classList.add('oculto');
+    mostrarSoloVista('vistaLogin');
+    setTimeout(() => $('inputPassword').focus(), 50);
+  }
+
+  onAuthStateChanged(auth, (usuario) => {
+    if (usuario && usuario.email === CORREO_PROFESOR) {
+      entrarAlPanel();
+    } else {
+      if (usuario) signOut(auth);
+      salirDelPanel();
+    }
+  });
+
+  // ======= CURSOS =======
+  function renderizarCursos() {
+    const lista = $('listaCursos');
+    if (cursos.length === 0) {
+      lista.innerHTML = '<p class="ayuda">Todavía no hay cursos.</p>';
+      return;
+    }
+    lista.innerHTML = cursos.map(c =>
+      `<button class="curso-item${c.id === cursoActualId ? ' activo' : ''}" data-curso="${c.id}">${escaparHTML(c.nombre)}</button>`
+    ).join('');
+  }
+
+  function seleccionarCurso(id) {
+    desuscribirCurso.forEach(f => f());
+    desuscribirCurso = [];
+    cursoActualId = id;
+    estudiantesCache = [];
+    historialCache = [];
+    cancelarImportacion();
+    history.replaceState(null, '', id ? '#curso=' + id : location.pathname + location.search);
+
+    renderizarCursos();
+    $('sinCurso').classList.toggle('oculto', !!id);
+    $('detalleCurso').classList.toggle('oculto', !id);
+    if (!id) return;
+
+    renderizarEncabezadoCurso();
+    $('filtroNombre').value = '';
+    $('filtroCurso').value = '';
+    $('filtroHistorialEstudiante').value = '';
+    renderizarProfesor();
+    renderizarHistorial();
+
+    desuscribirCurso.push(onSnapshot(refEstudiantes(id), (snapshot) => {
+      if (id !== cursoActualId) return;
+      estudiantesCache = snapshot.docs.map(d => {
+        const datos = d.data();
+        return { id: d.id, ...datos, puntaje: Number(datos.puntaje) || 0 };
+      });
+      renderizarProfesor();
+    }, mostrarError));
+
+    desuscribirCurso.push(onSnapshot(query(refHistorial(id), orderBy('creado', 'desc'), limit(500)), (snapshot) => {
+      if (id !== cursoActualId) return;
+      historialCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderizarHistorial();
+    }, mostrarError));
+  }
+
+  function renderizarEncabezadoCurso() {
+    const curso = cursoActual();
+    if (!curso) return;
+    $('cursoNombre').textContent = curso.nombre;
+    const enlace = enlaceEstudiantes(curso.id);
+    $('enlaceCurso').value = enlace;
+    $('btnAbrirEnlace').href = enlace;
+  }
+
+  async function crearCurso() {
+    const input = $('nuevoCursoNombre');
+    const nombre = input.value.trim();
+    if (!nombre) {
+      alert('Ingresá el nombre del curso.');
+      return;
+    }
+    if (cursos.some(c => normalizar(c.nombre) === normalizar(nombre))) {
+      alert('Ya existe un curso con ese nombre.');
+      return;
+    }
+    $('btnCrearCurso').disabled = true;
+    try {
+      const ref = await addDoc(collection(db, 'cursos'), { nombre, creado: Date.now() });
+      input.value = '';
+      seleccionarCurso(ref.id);
+      avisar('Curso creado. Ya podés copiar su enlace para los estudiantes.');
+    } catch (e) {
+      mostrarError(e);
+    } finally {
+      $('btnCrearCurso').disabled = false;
+    }
+  }
+
+  async function renombrarCurso() {
+    const curso = cursoActual();
+    if (!curso) return;
+    const nombre = (prompt('Nuevo nombre del curso:', curso.nombre) || '').trim();
+    if (!nombre || nombre === curso.nombre) return;
+    try {
+      await updateDoc(doc(db, 'cursos', curso.id), { nombre });
+    } catch (e) {
+      mostrarError(e);
+    }
+  }
+
+  async function borrarColeccion(ref) {
+    const snapshot = await getDocs(ref);
+    for (let i = 0; i < snapshot.docs.length; i += 400) {
+      const batch = writeBatch(db);
+      snapshot.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+  }
+
+  async function eliminarCurso() {
+    const curso = cursoActual();
+    if (!curso) return;
+    const escrito = prompt(`Se eliminará el curso con TODOS sus estudiantes, puntajes e historial, y su enlace dejará de funcionar.\n\nPara confirmar, escribí el nombre exacto del curso:\n${curso.nombre}`);
+    if (escrito === null) return;
+    if (escrito.trim() !== curso.nombre) {
+      alert('El nombre no coincide. No se eliminó nada.');
+      return;
+    }
+    $('btnEliminarCurso').disabled = true;
+    try {
+      await borrarColeccion(refEstudiantes(curso.id));
+      await borrarColeccion(refHistorial(curso.id));
+      await deleteDoc(doc(db, 'cursos', curso.id));
+      avisar('Curso eliminado.');
+    } catch (e) {
+      mostrarError(e);
+    } finally {
+      $('btnEliminarCurso').disabled = false;
+    }
+  }
+
+  // ======= MIGRACIÓN DESDE LAS APPS ANTERIORES =======
+  function migracionesPendientes() {
+    return MIGRACION.filter(m => !cursos.some(c => c.id === m.id));
+  }
+
+  function renderizarMigracion() {
+    const pendientes = migracionesPendientes();
+    $('cajaMigracion').classList.toggle('oculto', pendientes.length === 0);
+    $('migracionPendientes').textContent = pendientes.map(m => m.nombre).join(', ');
+  }
+
+  async function migrarCursosAnteriores() {
+    const pendientes = migracionesPendientes();
+    if (pendientes.length === 0) return;
+    if (!confirm(`Se importarán ${pendientes.length} curso(s) desde las apps anteriores. Los datos originales no se borran. ¿Continuar?`)) {
+      return;
+    }
+    const boton = $('btnMigrar');
+    boton.disabled = true;
+    boton.textContent = 'Importando…';
+    const resumen = [];
+    try {
+      for (const [i, m] of pendientes.entries()) {
+        const [estSnap, histSnap] = await Promise.all([
+          getDocs(collection(db, m.estudiantes)),
+          getDocs(collection(db, m.historial))
+        ]);
+        const idsEstudiantes = new Set(estSnap.docs.map(d => d.id));
+        const operaciones = [];
+
+        estSnap.docs.forEach(d => {
+          const x = d.data();
+          operaciones.push([doc(db, 'cursos', m.id, 'estudiantes', d.id), {
+            nombre: String(x.nombre || ''),
+            curso: String(x.curso || ''),
+            puntaje: Number(x.puntaje) || 0
+          }]);
+        });
+
+        let registros = 0;
+        histSnap.docs.forEach(d => {
+          const x = d.data();
+          // Registros de las pruebas de funcionamiento, sin estudiante real.
+          if (x.nombreEstudiante === 'Estudiante Prueba' && !idsEstudiantes.has(x.estudianteId)) return;
+          registros++;
+          operaciones.push([doc(db, 'cursos', m.id, 'historial', d.id), {
+            estudianteId: String(x.estudianteId || ''),
+            nombreEstudiante: String(x.nombreEstudiante || ''),
+            fecha: String(x.fecha || ''),
+            cambio: Number(x.cambio) || 0,
+            puntajeResultante: Number(x.puntajeResultante) || 0,
+            motivo: '',
+            creado: Number(x.creado) || 0
+          }]);
+        });
+
+        for (let j = 0; j < operaciones.length; j += 400) {
+          const batch = writeBatch(db);
+          operaciones.slice(j, j + 400).forEach(([ref, datos]) => batch.set(ref, datos));
+          await batch.commit();
+        }
+        // El curso se crea al final: si algo falla antes, se puede reintentar sin duplicar.
+        await setDoc(doc(db, 'cursos', m.id), { nombre: m.nombre, creado: Date.now() + i, migradoDe: m.estudiantes });
+        resumen.push(`• ${m.nombre}: ${estSnap.size} estudiantes, ${registros} registros de historial`);
+      }
+      alert('Importación lista:\n\n' + resumen.join('\n'));
+    } catch (e) {
+      mostrarError(e);
+    } finally {
+      boton.disabled = false;
+      boton.textContent = 'Importar cursos anteriores';
+    }
+  }
+
+  // ======= PANEL PROFESOR: AGREGAR =======
+  async function agregarEstudiante() {
+    const nombreInput = $('nuevoNombre');
+    const cursoInput = $('nuevoCurso');
+    const nombre = nombreInput.value.trim().replace(/\s+/g, ' ');
+    const curso = cursoInput.value.trim();
+
+    if (!nombre) {
+      alert('Ingresá el nombre del estudiante.');
+      return;
+    }
+    if (estudiantesCache.some(e => normalizar(e.nombre) === normalizar(nombre)) &&
+        !confirm(`Ya existe "${nombre}" en este curso. ¿Agregarlo de todas formas?`)) {
+      return;
+    }
+
+    try {
+      await addDoc(refEstudiantes(cursoActualId), { nombre, curso, puntaje: 0 });
+      nombreInput.value = '';
+      cursoInput.value = '';
+      nombreInput.focus();
+    } catch (e) {
+      mostrarError(e);
+    }
+  }
+
+  // ======= PANEL PROFESOR: LISTA / FILTROS =======
+  function actualizarFiltros() {
+    const grupos = [...new Set(estudiantesCache.map(e => e.curso).filter(c => c))].sort();
+
+    const selectFiltro = $('filtroCurso');
+    const valorActual = selectFiltro.value;
+    selectFiltro.innerHTML = '<option value="">Todos los grupos</option>' +
+      grupos.map(c => `<option value="${escaparHTML(c)}">${escaparHTML(c)}</option>`).join('');
+    selectFiltro.value = grupos.includes(valorActual) ? valorActual : '';
+
+    const selectHistorial = $('filtroHistorialEstudiante');
+    const valorHistorialActual = selectHistorial.value;
+    const ordenados = estudiantesCache.slice().sort((a, b) => a.nombre.localeCompare(b.nombre));
+    selectHistorial.innerHTML = '<option value="">Todos los estudiantes</option>' +
+      ordenados.map(e => `<option value="${e.id}">${escaparHTML(e.nombre)}</option>`).join('');
+    selectHistorial.value = estudiantesCache.some(e => e.id === valorHistorialActual) ? valorHistorialActual : '';
+  }
+
+  function renderizarProfesor() {
+    actualizarFiltros();
+    $('totalEstudiantes').textContent = estudiantesCache.length;
+
+    const contenedor = $('listaEstudiantes');
+
+    // Conservar lo que el profesor estaba escribiendo si llega una actualización en vivo.
+    const estadoPrevio = {};
+    contenedor.querySelectorAll('.estudiante-card').forEach(card => {
+      const form = card.querySelector('.edit-form');
+      estadoPrevio[card.dataset.id] = {
+        cantidad: card.querySelector('.cantidad').value,
+        editando: form.classList.contains('activo'),
+        nombre: card.querySelector('.edit-nombre').value,
+        curso: card.querySelector('.edit-curso').value,
+        puntaje: card.querySelector('.edit-puntaje').value
+      };
+    });
+
+    const filtroNombre = normalizar($('filtroNombre').value);
+    const filtroCurso = $('filtroCurso').value;
+
+    const filtrados = estudiantesCache.filter(e => {
+      const coincideNombre = !filtroNombre || normalizar(e.nombre).includes(filtroNombre);
+      const coincideCurso = !filtroCurso || e.curso === filtroCurso;
+      return coincideNombre && coincideCurso;
+    }).sort((a, b) => b.puntaje - a.puntaje || a.nombre.localeCompare(b.nombre));
+
+    contenedor.innerHTML = '';
+    $('profesorVacio').classList.toggle('oculto', filtrados.length > 0);
+
+    filtrados.forEach(est => {
+      const previo = estadoPrevio[est.id];
+      const card = document.createElement('div');
+      card.className = 'estudiante-card';
+      card.dataset.id = est.id;
+      card.innerHTML = `
+        <div class="estudiante-card-encabezado">
+          <div>
+            <div class="estudiante-nombre">${escaparHTML(est.nombre)}</div>
+            ${est.curso ? `<span class="curso-tag">${escaparHTML(est.curso)}</span>` : ''}
+          </div>
+          <div class="estudiante-puntaje">${est.puntaje} pts</div>
+        </div>
+
+        <div class="acciones-rapidas">
+          <input type="number" class="cantidad" placeholder="Cantidad" min="1" value="1">
+          <button class="btn btn-exito btn-chico" data-accion="sumar">➕ Sumar</button>
+          <button class="btn btn-peligro btn-chico" data-accion="restar">➖ Restar</button>
+        </div>
+
+        <div class="acciones-editar">
+          <button class="btn btn-secundario btn-chico" data-accion="editar">✏️ Editar</button>
+          <button class="btn btn-peligro btn-chico" data-accion="eliminar">🗑️ Eliminar</button>
+        </div>
+
+        <div class="edit-form">
+          <input type="text" class="edit-nombre" placeholder="Nombre">
+          <input type="text" class="edit-curso" placeholder="Curso/Grupo">
+          <input type="number" class="edit-puntaje" placeholder="Puntaje">
+          <button class="btn btn-primario btn-chico" data-accion="guardar">Guardar</button>
+          <button class="btn btn-secundario btn-chico" data-accion="editar">Cancelar</button>
+        </div>
+      `;
+      card.querySelector('.cantidad').value = previo ? previo.cantidad : '1';
+      const editando = previo && previo.editando;
+      card.querySelector('.edit-form').classList.toggle('activo', !!editando);
+      card.querySelector('.edit-nombre').value = editando ? previo.nombre : est.nombre;
+      card.querySelector('.edit-curso').value = editando ? previo.curso : (est.curso || '');
+      card.querySelector('.edit-puntaje').value = editando ? previo.puntaje : est.puntaje;
+      contenedor.appendChild(card);
+    });
+  }
+
+  // ======= AJUSTE DE PUNTAJE =======
+  async function ajustarPuntaje(card, signo) {
+    const id = card.dataset.id;
+    const cantidad = parseInt(card.querySelector('.cantidad').value, 10);
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+      alert('Ingresá una cantidad válida mayor a 0.');
+      return;
+    }
+
+    const estudiante = estudiantesCache.find(e => e.id === id);
+    if (!estudiante) return;
+
+    const cambio = cantidad * signo;
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'cursos', cursoActualId, 'estudiantes', id), { puntaje: increment(cambio) });
+    batch.set(doc(refHistorial(cursoActualId)),
+      registroHistorial(id, estudiante.nombre, cambio, estudiante.puntaje + cambio));
+    try {
+      await batch.commit();
+    } catch (e) {
+      mostrarError(e);
+    }
+  }
+
+  // ======= EDITAR / ELIMINAR =======
+  function toggleEdicion(card) {
+    const form = card.querySelector('.edit-form');
+    const abrir = !form.classList.contains('activo');
+    if (abrir) {
+      const est = estudiantesCache.find(e => e.id === card.dataset.id);
+      if (est) {
+        card.querySelector('.edit-nombre').value = est.nombre;
+        card.querySelector('.edit-curso').value = est.curso || '';
+        card.querySelector('.edit-puntaje').value = est.puntaje;
+      }
+    }
+    form.classList.toggle('activo', abrir);
+  }
+
+  async function guardarEdicion(card) {
+    const id = card.dataset.id;
+    const nombre = card.querySelector('.edit-nombre').value.trim().replace(/\s+/g, ' ');
+    const curso = card.querySelector('.edit-curso').value.trim();
+    const puntaje = parseInt(card.querySelector('.edit-puntaje').value, 10);
+
+    if (!nombre) {
+      alert('El nombre no puede estar vacío.');
+      return;
+    }
+    if (isNaN(puntaje)) {
+      alert('El puntaje debe ser un número.');
+      return;
+    }
+
+    const estudiante = estudiantesCache.find(e => e.id === id);
+    if (!estudiante) return;
+
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'cursos', cursoActualId, 'estudiantes', id), { nombre, curso, puntaje });
+    if (puntaje !== estudiante.puntaje) {
+      batch.set(doc(refHistorial(cursoActualId)),
+        registroHistorial(id, nombre, puntaje - estudiante.puntaje, puntaje, 'Edición manual'));
+    }
+    card.querySelector('.edit-form').classList.remove('activo');
+    try {
+      await batch.commit();
+    } catch (e) {
+      mostrarError(e);
+    }
+  }
+
+  async function eliminarEstudiante(card) {
+    const estudiante = estudiantesCache.find(e => e.id === card.dataset.id);
+    if (!estudiante) return;
+
+    if (!confirm(`¿Eliminar a "${estudiante.nombre}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'cursos', cursoActualId, 'estudiantes', estudiante.id));
+    } catch (e) {
+      mostrarError(e);
+    }
+  }
+
+  // ======= CARGA DE PUNTAJES (CLAUDE / KAHOOT) =======
+  function parsearPuntajes(texto) {
+    let contenido = texto.trim();
+    const bloque = contenido.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    if (bloque) contenido = bloque[1].trim();
+
+    if (contenido.startsWith('{') || contenido.startsWith('[')) {
+      let datos;
+      try {
+        datos = JSON.parse(contenido);
+      } catch (e) {
+        throw new Error('El bloque JSON tiene un error de formato. Pedile a Claude que lo vuelva a generar.');
+      }
+      const lista = Array.isArray(datos) ? datos : (datos.puntos || datos.estudiantes || []);
+      if (!Array.isArray(lista)) throw new Error('No encontré la lista "puntos" en el bloque.');
+      return {
+        curso: Array.isArray(datos) ? '' : String(datos.curso || ''),
+        motivo: Array.isArray(datos) ? '' : String(datos.motivo || ''),
+        filas: lista.map(x => ({ nombre: String((x && x.nombre) || '').trim(), puntos: Number(x && x.puntos) }))
+      };
+    }
+
+    // Una línea por estudiante: "NOMBRE: 5", "NOMBRE, -2", "NOMBRE<tab>5" o solo "NOMBRE" (0 puntos).
+    const filas = [];
+    for (const linea of contenido.split(/\r?\n/)) {
+      const l = linea.trim();
+      if (!l) continue;
+      const m = l.match(/^(.+?)[\s:;,]+([+-]?\d+)\s*(?:pts?\.?|puntos?)?$/i);
+      if (m) filas.push({ nombre: m[1].trim(), puntos: parseInt(m[2], 10) });
+      else if (!/\d/.test(l)) filas.push({ nombre: l, puntos: 0 });
+      else throw new Error(`No entendí esta línea: "${l}"`);
+    }
+    return { curso: '', motivo: '', filas };
+  }
+
+  function buscarEstudiante(nombre) {
+    const objetivo = normalizar(nombre);
+    const exacto = estudiantesCache.find(e => normalizar(e.nombre) === objetivo);
+    if (exacto) return { est: exacto, aproximado: false };
+
+    // Coincidencia parcial ("Diego Kondor" vs "DIEGO ALONSO KONDOR"), solo si es única.
+    const partes = objetivo.split(' ');
+    const candidatos = estudiantesCache.filter(e => {
+      const palabras = normalizar(e.nombre).split(' ');
+      return partes.every(p => palabras.includes(p));
+    });
+    if (candidatos.length === 1) return { est: candidatos[0], aproximado: true };
+    return null;
+  }
+
+  function revisarImportacion() {
+    $('importarError').textContent = '';
+    let datos;
+    try {
+      datos = parsearPuntajes($('textoImportar').value);
+    } catch (e) {
+      $('importarError').textContent = e.message;
+      return;
+    }
+    if (datos.filas.length === 0) {
+      $('importarError').textContent = 'Pegá primero el bloque de Claude o la lista de puntajes.';
+      return;
+    }
+    for (const f of datos.filas) {
+      if (!f.nombre) {
+        $('importarError').textContent = 'Hay una fila sin nombre.';
+        return;
+      }
+      if (!Number.isInteger(f.puntos) || Math.abs(f.puntos) > 10000) {
+        $('importarError').textContent = `Puntaje no válido para "${f.nombre}".`;
+        return;
+      }
+    }
+
+    if (datos.motivo && !$('motivoImportar').value.trim()) $('motivoImportar').value = datos.motivo;
+    const crearNuevos = $('crearNuevos').checked;
+
+    // Agrupar por estudiante (si un nombre aparece dos veces, se suman sus puntos).
+    const porClave = new Map();
+    for (const f of datos.filas) {
+      const encontrado = buscarEstudiante(f.nombre);
+      const clave = encontrado ? 'id:' + encontrado.est.id : 'nuevo:' + normalizar(f.nombre);
+      if (porClave.has(clave)) {
+        const fila = porClave.get(clave);
+        fila.puntos += f.puntos;
+        fila.textos.push(f.nombre);
+        continue;
+      }
+      let estado = 'ok';
+      if (!encontrado) estado = crearNuevos ? 'nuevo' : 'omitido';
+      else if (encontrado.aproximado) estado = 'aprox';
+      porClave.set(clave, {
+        textos: [f.nombre],
+        nombre: f.nombre.replace(/\s+/g, ' '),
+        est: encontrado ? encontrado.est : null,
+        puntos: f.puntos,
+        estado
+      });
+    }
+
+    importacionPendiente = { cursoId: cursoActualId, filas: [...porClave.values()] };
+
+    const avisos = [];
+    const curso = cursoActual();
+    if (datos.curso && curso) {
+      const a = normalizar(datos.curso), b = normalizar(curso.nombre);
+      if (!a.includes(b) && !b.includes(a)) {
+        avisos.push(`El bloque dice que es del curso "${datos.curso}", pero estás en "${curso.nombre}". Revisá que sea el curso correcto.`);
+      }
+    }
+    const omitidos = importacionPendiente.filas.filter(f => f.estado === 'omitido').length;
+    if (omitidos) avisos.push(`${omitidos} nombre(s) no están en este curso y se omitirán. Marcá "Crear los estudiantes que no estén" si son estudiantes nuevos.`);
+    if (importacionPendiente.filas.some(f => f.estado === 'aprox')) avisos.push('Algunos nombres coinciden solo en parte: revisá la columna "Estudiante".');
+    $('avisoImportar').innerHTML = avisos.map(escaparHTML).join('<br>');
+    $('avisoImportar').classList.toggle('oculto', avisos.length === 0);
+
+    const etiquetas = { ok: '✓ Encontrado', aprox: '≈ Revisar', nuevo: '➕ Se creará', omitido: '✕ Se omitirá' };
+    $('tablaPrevia').innerHTML = importacionPendiente.filas.map(f => {
+      const total = f.est ? f.est.puntaje + f.puntos : (f.estado === 'nuevo' ? f.puntos : '-');
+      const signo = f.puntos > 0 ? '+' : '';
+      return `<tr>
+        <td>${escaparHTML(f.textos.join(' / '))}</td>
+        <td>${f.est ? escaparHTML(f.est.nombre) : (f.estado === 'nuevo' ? escaparHTML(f.nombre) : '-')}</td>
+        <td class="${f.puntos >= 0 ? 'cambio-positivo' : 'cambio-negativo'}">${signo}${f.puntos}</td>
+        <td>${total}</td>
+        <td class="estado-${f.estado}">${etiquetas[f.estado]}</td>
+      </tr>`;
+    }).join('');
+
+    const aplicables = importacionPendiente.filas.filter(f => f.estado !== 'omitido').length;
+    $('btnAplicar').disabled = aplicables === 0;
+    $('btnAplicar').textContent = `Aplicar puntajes (${aplicables})`;
+    $('vistaPrevia').classList.remove('oculto');
+  }
+
+  function cancelarImportacion() {
+    importacionPendiente = null;
+    $('vistaPrevia').classList.add('oculto');
+    $('tablaPrevia').innerHTML = '';
+    $('importarError').textContent = '';
+  }
+
+  async function aplicarImportacion() {
+    const pendiente = importacionPendiente;
+    if (!pendiente || pendiente.cursoId !== cursoActualId) return;
+    const motivo = $('motivoImportar').value.trim();
+    const filas = pendiente.filas.filter(f => f.estado !== 'omitido');
+    if (filas.length === 0) return;
+
+    $('btnAplicar').disabled = true;
+    try {
+      for (let i = 0; i < filas.length; i += 200) {
+        const batch = writeBatch(db);
+        for (const f of filas.slice(i, i + 200)) {
+          if (f.estado === 'nuevo') {
+            const ref = doc(refEstudiantes(pendiente.cursoId));
+            batch.set(ref, { nombre: f.nombre, curso: '', puntaje: f.puntos });
+            if (f.puntos !== 0) {
+              batch.set(doc(refHistorial(pendiente.cursoId)), registroHistorial(ref.id, f.nombre, f.puntos, f.puntos, motivo));
+            }
+          } else if (f.puntos !== 0) {
+            const actual = estudiantesCache.find(e => e.id === f.est.id);
+            const base = actual ? actual.puntaje : f.est.puntaje;
+            batch.update(doc(db, 'cursos', pendiente.cursoId, 'estudiantes', f.est.id), { puntaje: increment(f.puntos) });
+            batch.set(doc(refHistorial(pendiente.cursoId)),
+              registroHistorial(f.est.id, f.est.nombre, f.puntos, base + f.puntos, motivo));
+          }
+        }
+        await batch.commit();
+      }
+      avisar(`Listo: se cargaron ${filas.length} estudiante(s).`);
+      $('textoImportar').value = '';
+      $('motivoImportar').value = '';
+      cancelarImportacion();
+    } catch (e) {
+      mostrarError(e);
+      $('btnAplicar').disabled = false;
+    }
+  }
+
+  async function copiarListaParaClaude() {
+    const curso = cursoActual();
+    if (!curso) return;
+    const lineas = estudiantesCache.slice()
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .map(e => `- ${e.nombre} (${e.puntaje} pts)`);
+    const texto = `Curso: ${curso.nombre}\nEstudiantes inscritos (${lineas.length}):\n${lineas.join('\n')}`;
+    await copiarTexto(texto);
+    avisar('Lista copiada. Pegala en tu proyecto de Claude.');
+  }
+
+  // ======= HISTORIAL =======
+  function renderizarHistorial() {
+    const filtroId = $('filtroHistorialEstudiante').value;
+    const filtrado = filtroId ? historialCache.filter(h => h.estudianteId === filtroId) : historialCache;
+
+    const contenedor = $('listaHistorial');
+    contenedor.innerHTML = '';
+    $('historialVacio').classList.toggle('oculto', filtrado.length > 0);
+
+    filtrado.forEach(h => {
+      const cambio = Number(h.cambio) || 0;
+      const claseCambio = cambio >= 0 ? 'cambio-positivo' : 'cambio-negativo';
+      const signo = cambio >= 0 ? '+' : '';
+      const item = document.createElement('div');
+      item.className = 'historial-item';
+      item.innerHTML = `
+        <div>
+          <div><strong>${escaparHTML(h.nombreEstudiante)}</strong></div>
+          <div class="historial-fecha">${escaparHTML(h.fecha)}${h.motivo ? ' · ' + escaparHTML(h.motivo) : ''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="${claseCambio}">${signo}${cambio}</div>
+          <div class="historial-fecha">Total: ${escaparHTML(h.puntajeResultante)}</div>
+        </div>
+      `;
+      contenedor.appendChild(item);
+    });
+  }
+
+  // ======= EVENTOS =======
+  $('btnIngresar').addEventListener('click', intentarLogin);
+  $('inputPassword').addEventListener('keydown', e => { if (e.key === 'Enter') intentarLogin(); });
+  $('btnCerrarSesion').addEventListener('click', () => signOut(auth));
+
+  $('listaCursos').addEventListener('click', e => {
+    const boton = e.target.closest('[data-curso]');
+    if (boton && boton.dataset.curso !== cursoActualId) seleccionarCurso(boton.dataset.curso);
+  });
+  $('btnCrearCurso').addEventListener('click', crearCurso);
+  $('nuevoCursoNombre').addEventListener('keydown', e => { if (e.key === 'Enter') crearCurso(); });
+  $('btnRenombrarCurso').addEventListener('click', renombrarCurso);
+  $('btnEliminarCurso').addEventListener('click', eliminarCurso);
+  $('btnMigrar').addEventListener('click', migrarCursosAnteriores);
+  $('btnCopiarEnlace').addEventListener('click', async () => {
+    await copiarTexto($('enlaceCurso').value);
+    avisar('Enlace copiado. Compartilo solo con los estudiantes de este curso.');
+  });
+
+  $('btnAgregarEstudiante').addEventListener('click', agregarEstudiante);
+  $('nuevoNombre').addEventListener('keydown', e => { if (e.key === 'Enter') agregarEstudiante(); });
+  $('filtroNombre').addEventListener('input', renderizarProfesor);
+  $('filtroCurso').addEventListener('change', renderizarProfesor);
+  $('filtroHistorialEstudiante').addEventListener('change', renderizarHistorial);
+
+  $('listaEstudiantes').addEventListener('click', e => {
+    const boton = e.target.closest('[data-accion]');
+    if (!boton) return;
+    const card = boton.closest('.estudiante-card');
+    switch (boton.dataset.accion) {
+      case 'sumar': ajustarPuntaje(card, 1); break;
+      case 'restar': ajustarPuntaje(card, -1); break;
+      case 'editar': toggleEdicion(card); break;
+      case 'guardar': guardarEdicion(card); break;
+      case 'eliminar': eliminarEstudiante(card); break;
+    }
+  });
+
+  $('btnRevisar').addEventListener('click', revisarImportacion);
+  $('btnCancelarImportar').addEventListener('click', cancelarImportacion);
+  $('btnAplicar').addEventListener('click', aplicarImportacion);
+  $('btnCopiarLista').addEventListener('click', copiarListaParaClaude);
+</script>
+
+</body>
+</html>
