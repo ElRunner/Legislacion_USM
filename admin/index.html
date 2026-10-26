@@ -612,7 +612,8 @@
       case 'auth/network-request-failed':
         return 'Sin conexión a internet.';
       case 'auth/operation-not-allowed':
-        return 'El acceso con contraseña no está activado en Firebase.';
+      case 'auth/configuration-not-found':
+        return 'El acceso con contraseña no está activado en Firebase (Authentication).';
       default:
         return 'No se pudo ingresar (' + codigo + ').';
     }
@@ -646,6 +647,7 @@
 
     desuscribirCursos = onSnapshot(query(collection(db, 'cursos'), orderBy('creado')), (snapshot) => {
       cursos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      $('sinCurso').textContent = 'Creá tu primer curso o elegí uno de la lista.';
       renderizarCursos();
       renderizarMigracion();
 
@@ -656,7 +658,12 @@
       } else {
         seleccionarCurso(cursos.length ? cursos[0].id : null);
       }
-    }, mostrarError);
+    }, (e) => {
+      if (e.code === 'permission-denied') {
+        $('sinCurso').textContent = 'Firebase no permite leer los cursos: faltan publicar las reglas de seguridad de Firestore.';
+      }
+      mostrarError(e);
+    });
   }
 
   function salirDelPanel() {
