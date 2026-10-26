@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Puntajes de Estudiantes</title>
+<style>
+  :root {
+    --azul: #2563eb;
+    --azul-oscuro: #1d4ed8;
+    --gris-bg: #f3f4f6;
+    --gris-borde: #e5e7eb;
+    --gris-texto: #374151;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--gris-bg);
+    color: var(--gris-texto);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--azul);
+    color: white;
+    padding: 16px 20px;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 1.3rem;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .tabla-contenedor {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+  }
+  th {
+    background: var(--azul);
+    color: white;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--gris-borde);
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  .puesto {
+    font-weight: 700;
+    width: 50px;
+  }
+  .puntaje-celda {
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    font-size: 1.1rem;
+  }
+  .medalla { font-size: 1.2rem; margin-right: 4px; }
+  .curso-tag {
+    display: inline-block;
+    background: #e0e7ff;
+    color: var(--azul-oscuro);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+  }
+  .vacio {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+  }
+
+  .oculto { display: none !important; }
+
+  footer {
+    text-align: center;
+    padding: 16px;
+    color: #9ca3af;
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 480px) {
+    header h1 { font-size: 1.1rem; }
+    th, td { padding: 9px 8px; font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="titulo">🏆 Puntajes de Estudiantes</h1>
+</header>
+
+<main>
+  <div class="tabla-contenedor">
+    <table id="tablaRanking" class="oculto">
+      <thead>
+        <tr>
+          <th class="puesto">#</th>
+          <th>Nombre</th>
+          <th id="colGrupo">Curso/Grupo</th>
+          <th>Puntaje</th>
+        </tr>
+      </thead>
+      <tbody id="tablaPublicaBody"></tbody>
+    </table>
+    <div id="mensaje" class="vacio">Cargando…</div>
+  </div>
+</main>
+
+<footer>Los puntajes se actualizan en tiempo real.</footer>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import {
+    getFirestore, collection, doc, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCk9LznEJ6jMUBjBOD1NN4NGATAdun47Zw",
+    authDomain: "legislacionusm.firebaseapp.com",
+    projectId: "legislacionusm",
+    storageBucket: "legislacionusm.firebasestorage.app",
+    messagingSenderId: "275588634772",
+    appId: "1:275588634772:web:2a6a723ccd9543a8e6bc81"
+  };
+
+  const ENLACE_INVALIDO = 'Este enlace no es válido. Pedile a tu profesor el enlace de tu curso.';
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  function escaparHTML(texto) {
+    const div = document.createElement('div');
+    div.textContent = texto == null ? '' : String(texto);
+    return div.innerHTML;
+  }
+
+  function mostrarMensaje(texto) {
+    document.getElementById('tablaRanking').classList.add('oculto');
+    const mensaje = document.getElementById('mensaje');
+    mensaje.textContent = texto;
+    mensaje.classList.remove('oculto');
+  }
+
+  function renderizarRanking(estudiantes) {
+    if (estudiantes.length === 0) {
+      mostrarMensaje('Todavía no hay estudiantes registrados.');
+      return;
+    }
+    document.getElementById('mensaje').classList.add('oculto');
+    document.getElementById('tablaRanking').classList.remove('oculto');
+
+    const hayGrupos = estudiantes.some(e => e.curso);
+    document.getElementById('colGrupo').classList.toggle('oculto', !hayGrupos);
+
+    const medallas = ['🥇', '🥈', '🥉'];
+    const tbody = document.getElementById('tablaPublicaBody');
+    tbody.innerHTML = '';
+    estudiantes.forEach((est, i) => {
+      const tr = document.createElement('tr');
+      const medalla = medallas[i] ? `<span class="medalla">${medallas[i]}</span>` : '';
+      tr.innerHTML = `
+        <td class="puesto">${medalla}${i + 1}</td>
+        <td>${escaparHTML(est.nombre)}</td>
+        ${hayGrupos ? `<td>${est.curso ? `<span class="curso-tag">${escaparHTML(est.curso)}</span>` : '-'}</td>` : ''}
+        <td class="puntaje-celda">${est.puntaje}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  const cursoId = new URLSearchParams(location.search).get('c');
+
+  if (!cursoId || !/^[A-Za-z0-9]{10,40}$/.test(cursoId)) {
+    mostrarMensaje(ENLACE_INVALIDO);
+  } else {
+    let cursoValido = false;
+    let ultimosEstudiantes = null;
+
+    onSnapshot(doc(db, 'cursos', cursoId), (snapshot) => {
+      if (!snapshot.exists()) {
+        cursoValido = false;
+        mostrarMensaje(ENLACE_INVALIDO);
+        return;
+      }
+      cursoValido = true;
+      const nombre = snapshot.data().nombre || '';
+      document.title = 'Puntajes - ' + nombre;
+      document.getElementById('titulo').textContent = '🏆 Puntajes de Estudiantes - ' + nombre;
+      if (ultimosEstudiantes) renderizarRanking(ultimosEstudiantes);
+    }, () => mostrarMensaje(ENLACE_INVALIDO));
+
+    onSnapshot(collection(db, 'cursos', cursoId, 'estudiantes'), (snapshot) => {
+      ultimosEstudiantes = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data(), puntaje: Number(d.data().puntaje) || 0 }))
+        .sort((a, b) => b.puntaje - a.puntaje || String(a.nombre).localeCompare(String(b.nombre)));
+      if (cursoValido) renderizarRanking(ultimosEstudiantes);
+    }, () => mostrarMensaje('No se pudieron cargar los puntajes. Revisá tu conexión y recargá la página.'));
+  }
+</script>
+
+</body>
+</html>
